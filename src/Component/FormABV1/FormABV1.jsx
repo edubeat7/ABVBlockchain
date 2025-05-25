@@ -51,16 +51,72 @@ const BlockchainRegistrationForm = () => {
     const [submissionStatus, setSubmissionStatus] = useState('');
 
     const sectores = [
-      'Banca Comercial',
-      'Banca de Inversión',
-      'Banca Universal',
-      'Seguros',
-      'Casa de Cambio',
-      'Fintech',
-      'Cooperativas',
-      'Microfinanzas',
-      'Otros'
-    ];
+        // Sector Financiero y Relacionados
+        'Banca Privada',
+        'Banca Pública',
+        'Seguros',
+        'Bolsa de Valores',
+        'Fintech',
+        'Criptomonedas / Activos Digitales',
+        'Microfinanzas',
+        'Casas de Cambio',
+      
+        // Sector Público y Gubernamental
+        'Gobierno / Sector Público', // General
+        'Administración Tributaria',
+        'Registros Públicos (Propiedad, Mercantil)',
+        'Notarías',
+        'Defensa y Seguridad Nacional',
+      
+        // Salud y Bienestar
+        'Salud / Servicios Médicos',
+        'Industria Farmacéutica',
+        'Biotecnología',
+        'Investigación Médica',
+      
+        // Industria y Manufactura
+        'Industrial / Manufactura',
+        'Automotriz',
+        'Alimentos y Bebidas',
+        'Textil y Confección',
+        'Construcción',
+      
+        // Tecnología y Comunicaciones
+        'Tecnología de la Información (TI)',
+        'Desarrollo de Software',
+        'Telecomunicaciones',
+        'Ciberseguridad',
+        'Inteligencia Artificial',
+        'Internet de las Cosas (IoT)',
+      
+        // Educación e Investigación
+        'Educación' ,
+        'Investigación y Desarrollo (I+D)',
+      
+        // Comercio y Servicios
+        'Comercio Minorista (Retail)',
+        'Comercio Mayorista',
+        'Logística y Cadena de Suministro',
+        'Transporte',
+        'Turismo y Hotelería',
+        'Entretenimiento y Medios',
+        'Consultoría (Legal, Financiera, Tecnológica)',
+        'Servicios',
+        'Ingenieria',
+      
+        // Recursos Naturales y Energía
+        'Energía (Petróleo, Gas, Renovables)',
+        'Minería',
+        'Agricultura / Agroindustria',
+      
+        // Otros
+        'Organizaciones No Gubernamentales (ONG)',
+        'Fundaciones',
+        'Legal / Despachos de Abogados',
+        'Marketing y Publicidad',
+        'Inmobiliario',
+        'Otros' // Siempre es bueno tener una opción genérica
+      ];
 
     useEffect(() => {
       const checkIsMobile = () => {
