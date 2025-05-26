@@ -157,8 +157,8 @@ const BlockchainRegistrationForm = () => {
       if (isNaN(count) || count < 1) {
         count = 1;
       }
-      if (count > 50) {
-          count = 50;
+      if (count > 10) {
+          count = 10;
       }
       setNumParticipants(count);
     };
@@ -394,9 +394,9 @@ const BlockchainRegistrationForm = () => {
       { label: 'Tel. Oficina', width: '140px' }, 
       { label: 'Email*', width: '240px' },       
       { label: 'Organización*', width: '220px' },  
-      { label: 'RIF Org.*', width: '130px' }, 
-      { label: 'Cargo Org.*', width: '200px' },  
-      { label: 'Sector Org.*', width: '190px' }   
+      { label: 'RIF*', width: '130px' }, 
+      { label: 'Cargo en la empresa*', width: '200px' },  
+      { label: 'Sector de la empresa*', width: '190px' }   
     ];
 
     const renderParticipantCards = () => {
@@ -820,7 +820,7 @@ const BlockchainRegistrationForm = () => {
                   required
                   aria-describedby="numParticipantsHelp"
                 />
-                <small id="numParticipantsHelp" className="form-text text-muted">Mínimo 1, máximo 50 participantes.</small>
+                <small id="numParticipantsHelp" className="form-text text-muted">Mínimo 1, máximo 10 participantes.</small>
               </div>
             </div>
   
