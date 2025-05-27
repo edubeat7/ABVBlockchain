@@ -540,6 +540,7 @@ const BlockchainRegistrationForm = () => {
                   >
                     <option value="V">V</option>
                     <option value="E">E</option>
+                    <option value="P">P</option>
                   </select>
                 </div>
                 
@@ -758,6 +759,7 @@ const BlockchainRegistrationForm = () => {
                     >
                       <option value="V">V</option>
                       <option value="E">E</option>
+                      <option value="P">P</option>
                     </select>
                   </td>
                   <td>
