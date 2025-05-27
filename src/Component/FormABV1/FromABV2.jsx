@@ -178,18 +178,13 @@ const BlockchainRegistrationForm = () => {
       let processedValue = value;
 
       if (field === 'CedulaParticipante') {
-        processedValue = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 9);
+        processedValue = value.replace(/\D/g, '').slice(0, 8);
       } else if (field === 'TelefonoCelularParticipante' || field === 'TelefonoOficinaParticipante') {
           processedValue = value.replace(/[^\d+\-().\s]/g, ''); 
       } else if (field === 'RIFOrganizacionParticipante') {
           processedValue = value.toUpperCase().replace(/[^VEJPG0-9-]/g, '').slice(0,12);
       } else if (field === 'IDValidadorParticipante') {
-          processedValue = value.replace(/\D/g, '').slice(0, 6);
-      } else if (field === 'TipoTicketParticipante') {
-          // Si cambia a "Venta", limpiar el ID Validador
-          if (value === 'Venta') {
-              updatedParticipants[index] = { ...updatedParticipants[index], IDValidadorParticipante: '' };
-          }
+          processedValue = value.toUpperCase();
       }
 
       updatedParticipants[index] = { ...updatedParticipants[index], [field]: processedValue };
@@ -198,89 +193,13 @@ const BlockchainRegistrationForm = () => {
 
     const handleParticipantCedulaBlur = (index) => {
       const participant = participants[index];
-      let cedulaValue = participant.CedulaParticipante.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 9);
-      if (cedulaValue.length > 0 && cedulaValue.length < 9 && /^\d+$/.test(cedulaValue)) {
-        cedulaValue = cedulaValue.padStart(9, '0');
+      let cedulaValue = participant.CedulaParticipante.replace(/\D/g, '').slice(0, 8);
+      if (cedulaValue.length > 0 && cedulaValue.length < 8) {
+        cedulaValue = cedulaValue.padStart(8, '0');
       }
       const updatedParticipants = [...participants];
       updatedParticipants[index] = { ...updatedParticipants[index], CedulaParticipante: cedulaValue };
       setParticipants(updatedParticipants);
-    };
-
-    // Función para validar duplicados en la base de datos
-    const validateDuplicates = async (participants) => {
-      try {
-        // Obtener todas las cédulas de los participantes actuales (filtrar vacías)
-        const cedulas = participants
-          .map(p => p.CedulaParticipante)
-          .filter(cedula => cedula && cedula.trim() !== '');
-        
-        // Obtener todos los IDs de validador de participantes con tipo "Cortesia" (filtrar vacíos)
-        const cortesiaValidators = participants
-          .filter(p => p.TipoTicketParticipante === 'Cortesia' && p.IDValidadorParticipante && p.IDValidadorParticipante.trim() !== '')
-          .map(p => p.IDValidadorParticipante);
-
-        // Verificar cédulas duplicadas
-        if (cedulas.length > 0) {
-          console.log('Verificando cédulas:', cedulas);
-          const { data: existingCedulas, error: cedulaError } = await supabase
-            .from('RegistroBlockchain2')
-            .select('CedulaParticipante, NombreParticipante, ApellidoParticipante')
-            .in('CedulaParticipante', cedulas);
-
-          if (cedulaError) {
-            console.error('Error verificando cédulas:', cedulaError);
-            throw new Error('Error al verificar cédulas duplicadas');
-          }
-
-          if (existingCedulas && existingCedulas.length > 0) {
-            console.log('Cédulas duplicadas encontradas:', existingCedulas);
-            const duplicateCedulas = existingCedulas.map(record => 
-              `${record.CedulaParticipante} (${record.NombreParticipante} ${record.ApellidoParticipante})`
-            );
-            return {
-              isValid: false,
-              message: `Las siguientes cédulas ya están registradas: ${duplicateCedulas.join(', ')}`
-            };
-          }
-        }
-
-        // Verificar IDs de validador duplicados para cortesías
-        if (cortesiaValidators.length > 0) {
-          console.log('Verificando IDs de validador:', cortesiaValidators);
-          const { data: existingValidators, error: validatorError } = await supabase
-            .from('RegistroBlockchain2')
-            .select('IDValidadorParticipante, NombreParticipante, ApellidoParticipante, TipoTicketParticipante')
-            .in('IDValidadorParticipante', cortesiaValidators)
-            .eq('TipoTicketParticipante', 'Cortesia');
-
-          if (validatorError) {
-            console.error('Error verificando IDs de validador:', validatorError);
-            throw new Error('Error al verificar IDs de validador duplicados');
-          }
-
-          if (existingValidators && existingValidators.length > 0) {
-            console.log('IDs de validador duplicados encontrados:', existingValidators);
-            const duplicateValidators = existingValidators.map(record => 
-              `${record.IDValidadorParticipante} (${record.NombreParticipante} ${record.ApellidoParticipante})`
-            );
-            return {
-              isValid: false,
-              message: `Los siguientes IDs de validador de cortesía ya están registrados: ${duplicateValidators.join(', ')}`
-            };
-          }
-        }
-
-        console.log('Validación de duplicados completada sin errores');
-        return { isValid: true };
-
-      } catch (error) {
-        console.error('Error en validación de duplicados:', error);
-        return {
-          isValid: false,
-          message: `Error al validar duplicados: ${error.message}`
-        };
-      }
     };
 
     const handleSubmit = async (e) => {
@@ -294,7 +213,7 @@ const BlockchainRegistrationForm = () => {
         return;
       }
 
-      // --- Validación de campos requeridos (sin cambios) ---
+      // --- Validación (sin cambios) ---
       const requiredBillingFields = [
           { key: 'RIFCedulaFacturacion', label: 'RIF o Cédula (Facturación)'}, 
           { key: 'DenominacionFiscalFacturacion', label: 'Denominación Fiscal'}, 
@@ -340,32 +259,8 @@ const BlockchainRegistrationForm = () => {
                   return;
               }
           }
-
-          // Validar ID Validador para cortesías
-          if (p.TipoTicketParticipante === 'Cortesia' && (!p.IDValidadorParticipante || p.IDValidadorParticipante.trim() === '')) {
-              const message = `El campo 'ID Validador' es obligatorio para participantes de cortesía (Participante ${participantNumber}).`;
-              setSubmissionStatus(`Error: ${message}`);
-              alert(message);
-              const validatorInput = document.querySelector(`[name="participant-${i}-IDValidadorParticipante"]`);
-              if (validatorInput) validatorInput.focus();
-              return;
-          }
-
-          // Validar rango del ID Validador para cortesías
-          if (p.TipoTicketParticipante === 'Cortesia' && p.IDValidadorParticipante) {
-              const validatorId = parseInt(p.IDValidadorParticipante, 10);
-              if (isNaN(validatorId) || validatorId < 100000 || validatorId > 999999) {
-                  const message = `El ID Validador del participante ${participantNumber} debe ser un número entre 100000 y 999999.`;
-                  setSubmissionStatus(`Error: ${message}`);
-                  alert(message);
-                  const validatorInput = document.querySelector(`[name="participant-${i}-IDValidadorParticipante"]`);
-                  if (validatorInput) validatorInput.focus();
-                  return;
-              }
-          }
-
-          if (p.CedulaParticipante.length !== 9) {
-              const message = `La cédula del participante ${participantNumber} debe tener 9 caracteres.`;
+          if (p.CedulaParticipante.length !== 8) {
+              const message = `La cédula del participante ${participantNumber} debe tener 8 dígitos.`;
               setSubmissionStatus(`Error: ${message}`);
               alert(message);
               const cedulaInput = document.querySelector(`[name="participant-${i}-CedulaParticipante"]`);
@@ -381,22 +276,11 @@ const BlockchainRegistrationForm = () => {
               return;
           }
       }
-      // --- Fin Validación de campos requeridos ---
+      // --- Fin Validación ---
 
       setIsSubmitting(true);
 
       try {
-        // NUEVA VALIDACIÓN: Verificar duplicados en la base de datos
-        setSubmissionStatus('Verificando duplicados...');
-        const validationResult = await validateDuplicates(participants);
-        
-        if (!validationResult.isValid) {
-          setSubmissionStatus(`Error: ${validationResult.message}`);
-          alert(validationResult.message);
-          setIsSubmitting(false);
-          return;
-        }
-
         // Preparamos los datos para Supabase
         // Cada participante se insertará como una fila, incluyendo los datos de facturación
         const recordsToInsert = participants.map(participant => ({
@@ -405,8 +289,6 @@ const BlockchainRegistrationForm = () => {
             // Puedes añadir campos adicionales si es necesario, ej:
             // fecha_inscripcion: new Date().toISOString(), 
         }));
-
-        setSubmissionStatus('Enviando datos...');
 
         // El nombre de la tabla debe coincidir con el de tu tabla en Supabase
         const { data, error } = await supabase
@@ -444,6 +326,10 @@ const BlockchainRegistrationForm = () => {
 
     const tableRef = useRef(null);
 
+    // El resto del componente (useEffect para tableRef, participantTableHeaders, renderParticipantCards, renderParticipantsTable, y el JSX del return)
+    // puede permanecer igual, ya que solo maneja la UI y la lógica local del estado.
+    // ... (pegar aquí el resto del código SIN CAMBIOS desde `tableRef` hasta el final del componente)
+    // ...
     useEffect(() => {
       if (isMobile || typeof document === 'undefined') return; 
       
@@ -534,7 +420,6 @@ const BlockchainRegistrationForm = () => {
                   >
                     <option value="V">V</option>
                     <option value="E">E</option>
-                    <option value="P">P</option>
                   </select>
                 </div>
                 
@@ -548,8 +433,8 @@ const BlockchainRegistrationForm = () => {
                     onChange={(e) => handleParticipantChange(index, 'CedulaParticipante', e.target.value)} 
                     onBlur={() => handleParticipantCedulaBlur(index)}
                     className="form-input"
-                    placeholder="Ej: 123456789"
-                    maxLength="9"
+                    placeholder="Ej: 12345678"
+                    maxLength="8"
                     required
                   />
                 </div>
@@ -570,10 +455,7 @@ const BlockchainRegistrationForm = () => {
                 </div>
   
                 <div className="participant-field">
-                  <label htmlFor={`participant-${index}-IDValidadorParticipante-card`}>
-                    ID Validador
-                    {participant.TipoTicketParticipante === 'Cortesia' && <span style={{color: 'red'}}>*</span>}
-                  </label>
+                  <label htmlFor={`participant-${index}-IDValidadorParticipante-card`}>ID Validador</label>
                   <input
                     id={`participant-${index}-IDValidadorParticipante-card`}
                     name={`participant-${index}-IDValidadorParticipante`} 
@@ -581,15 +463,7 @@ const BlockchainRegistrationForm = () => {
                     value={participant.IDValidadorParticipante} 
                     onChange={(e) => handleParticipantChange(index, 'IDValidadorParticipante', e.target.value)} 
                     className="form-input"
-                    placeholder={participant.TipoTicketParticipante === 'Cortesia' ? '100000-999999' : 'No disponible para venta'}
-                    maxLength="6"
-                    required={participant.TipoTicketParticipante === 'Cortesia'}
-                    disabled={participant.TipoTicketParticipante === 'Venta'}
-                    style={{
-                      backgroundColor: participant.TipoTicketParticipante === 'Venta' ? '#f5f5f5' : '',
-                      color: participant.TipoTicketParticipante === 'Venta' ? '#999' : '',
-                      cursor: participant.TipoTicketParticipante === 'Venta' ? 'not-allowed' : 'text'
-                    }}
+                    placeholder="Cortesia"
                   />
                 </div>
   
@@ -759,7 +633,6 @@ const BlockchainRegistrationForm = () => {
                     >
                       <option value="V">V</option>
                       <option value="E">E</option>
-                      <option value="P">P</option>
                     </select>
                   </td>
                   <td>
@@ -771,8 +644,8 @@ const BlockchainRegistrationForm = () => {
                       onChange={(e) => handleParticipantChange(index, 'CedulaParticipante', e.target.value)} 
                       onBlur={() => handleParticipantCedulaBlur(index)}
                       className="form-input compact"
-                      placeholder="Ej: 123456789"
-                      maxLength="9"
+                      placeholder="Ej: 12345678"
+                      maxLength="8"
                       required
                     />
                   </td>
@@ -797,15 +670,7 @@ const BlockchainRegistrationForm = () => {
                       value={participant.IDValidadorParticipante} 
                       onChange={(e) => handleParticipantChange(index, 'IDValidadorParticipante', e.target.value)} 
                       className="form-input compact"
-                      placeholder={participant.TipoTicketParticipante === 'Cortesia' ? '100000-999999' : 'No disponible'}
-                      maxLength="6"
-                      required={participant.TipoTicketParticipante === 'Cortesia'}
-                      disabled={participant.TipoTicketParticipante === 'Venta'}
-                      style={{
-                        backgroundColor: participant.TipoTicketParticipante === 'Venta' ? '#f5f5f5' : '',
-                        color: participant.TipoTicketParticipante === 'Venta' ? '#999' : '',
-                        cursor: participant.TipoTicketParticipante === 'Venta' ? 'not-allowed' : 'text'
-                      }}
+                     
                     />
                   </td>
                   <td>
@@ -1033,9 +898,6 @@ const BlockchainRegistrationForm = () => {
           <div className="footer">
             <p>
               Los campos marcados con <span style={{color: 'red'}}>*</span> son obligatorios
-            </p>
-            <p>
-              <small>* El campo ID Validador es obligatorio solo para participantes de cortesía (100000-999999) y está deshabilitado para ventas</small>
             </p>
           </div>
         </div>
