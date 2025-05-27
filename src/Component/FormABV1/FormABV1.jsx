@@ -288,7 +288,7 @@ const BlockchainRegistrationForm = () => {
         return;
       }
 
-      // --- Validación de campos requeridos (sin cambios) ---
+      // --- Validación de campos requeridos ---
       const requiredBillingFields = [
           { key: 'RIFCedulaFacturacion', label: 'RIF o Cédula (Facturación)'}, 
           { key: 'DenominacionFiscalFacturacion', label: 'Denominación Fiscal'}, 
@@ -314,6 +314,7 @@ const BlockchainRegistrationForm = () => {
               { key: 'NacionalidadParticipante', label: 'Nacionalidad'},
               { key: 'CedulaParticipante', label: 'Cédula'},
               { key: 'TipoTicketParticipante', label: 'Tipo de Ticket'},
+              { key: 'IDValidadorParticipante', label: 'ID Validador'}, // AHORA ES OBLIGATORIO PARA TODOS
               { key: 'NombreParticipante', label: 'Nombre'},
               { key: 'ApellidoParticipante', label: 'Apellido'},
               { key: 'TelefonoCelularParticipante', label: 'Teléfono Celular'},
@@ -335,38 +336,26 @@ const BlockchainRegistrationForm = () => {
               }
           }
 
-          // Validar ID Validador para cortesías
-          if (p.TipoTicketParticipante === 'Cortesia' && (!p.IDValidadorParticipante || p.IDValidadorParticipante.trim() === '')) {
-              const message = `El campo 'ID Validador' es obligatorio para participantes de cortesía (Participante ${participantNumber}).`;
+          // Validar longitud del ID Validador (ahora siempre obligatorio)
+          if (p.IDValidadorParticipante.length !== 6) {
+              const message = `El ID Validador del participante ${participantNumber} debe tener exactamente 6 dígitos.`;
               setSubmissionStatus(`Error: ${message}`);
               alert(message);
               const validatorInput = document.querySelector(`[name="participant-${i}-IDValidadorParticipante"]`);
               if (validatorInput) validatorInput.focus();
               return;
           }
-
-          // Validar longitud del ID Validador si está presente (tanto para Venta como Cortesía)
-          if (p.IDValidadorParticipante && p.IDValidadorParticipante.trim() !== '') {
-              if (p.IDValidadorParticipante.length !== 6) {
-                  const message = `El ID Validador del participante ${participantNumber} debe tener exactamente 6 dígitos.`;
+      
+          // Validar rango del ID Validador para cortesías
+          if (p.TipoTicketParticipante === 'Cortesia') {
+              const validatorId = parseInt(p.IDValidadorParticipante, 10);
+              if (isNaN(validatorId) || validatorId < 100000 || validatorId > 999999) {
+                  const message = `El ID Validador del participante ${participantNumber} debe ser un número entre 100000 y 999999 para cortesías.`;
                   setSubmissionStatus(`Error: ${message}`);
                   alert(message);
                   const validatorInput = document.querySelector(`[name="participant-${i}-IDValidadorParticipante"]`);
                   if (validatorInput) validatorInput.focus();
                   return;
-              }
-          
-              // Validar rango del ID Validador para cortesías (solo si es cortesía)
-              if (p.TipoTicketParticipante === 'Cortesia') {
-                  const validatorId = parseInt(p.IDValidadorParticipante, 10);
-                  if (isNaN(validatorId) || validatorId < 100000 || validatorId > 999999) {
-                      const message = `El ID Validador del participante ${participantNumber} debe ser un número entre 100000 y 999999.`;
-                      setSubmissionStatus(`Error: ${message}`);
-                      alert(message);
-                      const validatorInput = document.querySelector(`[name="participant-${i}-IDValidadorParticipante"]`);
-                      if (validatorInput) validatorInput.focus();
-                      return;
-                  }
               }
           }
 
@@ -507,7 +496,7 @@ const BlockchainRegistrationForm = () => {
       { label: 'Nacionalidad*', width: '110px' }, 
       { label: 'Cédula*', width: '110px' }, 
       { label: 'Tipo Ticket*', width: '120px' }, 
-      { label: 'ID Validador', width: '130px' }, 
+      { label: 'ID Validador*', width: '130px' }, // AHORA OBLIGATORIO
       { label: 'Nombre*', width: '180px' },  
       { label: 'Apellido*', width: '180px' },  
       { label: 'Tel. Celular*', width: '140px' }, 
@@ -577,8 +566,7 @@ const BlockchainRegistrationForm = () => {
   
                 <div className="participant-field">
                   <label htmlFor={`participant-${index}-IDValidadorParticipante-card`}>
-                    ID Validador
-                    {participant.TipoTicketParticipante === 'Cortesia' && <span style={{color: 'red'}}>*</span>}
+                    ID Validador<span style={{color: 'red'}}>*</span>
                   </label>
                   <input
                     id={`participant-${index}-IDValidadorParticipante-card`}
@@ -587,9 +575,9 @@ const BlockchainRegistrationForm = () => {
                     value={participant.IDValidadorParticipante} 
                     onChange={(e) => handleParticipantChange(index, 'IDValidadorParticipante', e.target.value)} 
                     className="form-input"
-                    placeholder={participant.TipoTicketParticipante === 'Cortesia' ? '100000-999999 (obligatorio)' : '6 dígitos (opcional)'}
+                    placeholder={participant.TipoTicketParticipante === 'Cortesia' ? '100000-999999 (obligatorio)' : '6 dígitos (obligatorio)'}
                     maxLength="6"
-                    required={participant.TipoTicketParticipante === 'Cortesia'}
+                    required
                   />
                 </div>
   
@@ -626,7 +614,7 @@ const BlockchainRegistrationForm = () => {
                     name={`participant-${index}-TelefonoCelularParticipante`} 
                     type="tel"
                     value={participant.TelefonoCelularParticipante} 
-                    onChange={(e) => handleParticipantChange(index, 'TelefonoCelularParticipante', e.target.value)} 
+                    onChange={(e) => handleParticipantChange(index, 'TelefonoCelularParticipante', e.target.value)}
                     className="form-input"
                     placeholder="Ej: 04XX-XXXXXXX"
                     required
@@ -799,7 +787,7 @@ const BlockchainRegistrationForm = () => {
                       className="form-input compact"
                       placeholder={participant.TipoTicketParticipante === 'Cortesia' ? '100000-999999' : '6 dígitos'}
                       maxLength="6"
-                      required={participant.TipoTicketParticipante === 'Cortesia'}
+                      required
                     />
                   </td>
                   <td>
@@ -1029,7 +1017,7 @@ const BlockchainRegistrationForm = () => {
               Los campos marcados con <span style={{color: 'red'}}>*</span> son obligatorios
             </p>
             <p>
-              <small>* El campo ID Validador es obligatorio para cortesías (100000-999999) y opcional para ventas (6 dígitos). No se permiten IDs duplicados.</small>
+              <small>* El campo ID Validador es OBLIGATORIO para todos los participantes (6 dígitos). Para cortesías debe estar entre 100000-999999. No se permiten IDs duplicados.</small>
             </p>
           </div>
         </div>
